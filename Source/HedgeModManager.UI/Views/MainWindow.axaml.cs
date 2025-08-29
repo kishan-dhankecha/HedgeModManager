@@ -70,6 +70,8 @@ public partial class MainWindow : Window
 
         Logger.Information($"Loading URI handlers...");
         Program.InstallURIHandler();
+        if (OperatingSystem.IsMacOS())
+            Program.ListenForUriSchemeMac((commands) => _ = ViewModel.ProcessCommandsAsync(commands));
 
         LoadGames();
 

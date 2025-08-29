@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Runtime.Versioning;
 using System.Globalization;
+using Avalonia.Controls.ApplicationLifetimes;
 
 #if !DEBUG
 using System.Diagnostics;
@@ -180,6 +181,28 @@ public sealed class Program
                 reg.Close();
             }
             catch { }
+        }
+    }
+
+    [SupportedOSPlatform("macos")]
+    public static void ListenForUriSchemeMac(Action<List<ICliCommand>> callback)
+    {
+        // Use Avalonia IActivatableLifetime to listen for OpenUri events on macOS
+        if (Application.Current?.TryGetFeature(typeof(IActivatableLifetime)) is { } activatableLifetime)
+        {
+            ((IActivatableLifetime)activatableLifetime).Activated += async (s, a) =>
+            {
+                if (a is ProtocolActivatedEventArgs protocolArgs && protocolArgs.Kind == ActivationKind.OpenUri)
+                {
+                    var uri = protocolArgs.Uri.ToString();
+                    var args = CommandLine.ParseArguments(["--schema", uri]);
+                    var (_, commands) = CommandLine.ExecuteArguments(args);
+                    if (commands.Count > 0)
+                    {
+                        callback(commands);
+                    }
+                }
+            };
         }
     }
 

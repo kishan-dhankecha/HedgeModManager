@@ -133,7 +133,9 @@ public class ModdableGameLocator
             {
                 { "Windows", [new(string.Empty, "SOFTWARE\\UnleashedRecomp")] },
                 { "Flatpak", [new("io.github.hedge_dev.unleashedrecomp", "unleashedrecomp")] },
-                { "Desktop", [new("io.github.hedge_dev.unleashedrecomp", "unleashedrecomp"), new("UnleashedRecomp", "unleashedrecomp")] }
+                { "Desktop", [new("io.github.hedge_dev.unleashedrecomp", "unleashedrecomp"), new("UnleashedRecomp", "unleashedrecomp")] },
+                { "macOS", [new("io.github.hedge_dev.unleashedrecomp", "unleashedrecomp"), new("UnleashedRecomp", "unleashedrecomp")] }
+
             }
         }
     ];
@@ -398,6 +400,27 @@ public class ModdableGameLocator
                                 Logger.Debug($"Game \"{game.ID}\" at \"{path}\" already exists");
                             }
                         }
+                    }
+                }
+            }
+            if (OperatingSystem.IsMacOS() && gameInfo.PlatformInfos.TryGetValue("macOS", out var macOsInfo))
+            {
+                foreach (var entry in macOsInfo)
+                {
+                    string root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    "Library", "Application Support", entry.Executable);
+                    if (Directory.Exists(root))
+                    {
+                        var gameSimple = new GameSimple(
+                            "macOS", entry.ID, gameInfo.ID,
+                            root, Path.GetFileName(entry.Executable), "macOS",
+                            null, $"open -a {entry.Executable}", null);
+                        var game = new ModdableGameGeneric(gameSimple)
+                        {
+                            Is64Bit = gameInfo.Is64Bit
+                        };
+                        game.ModDatabase.SupportsCodeCompilation = gameInfo.SupportsCodes;
+                        games.Add(game);
                     }
                 }
             }
